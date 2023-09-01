@@ -1,0 +1,27 @@
+dn1uqgmpxoix01
+dn1uqgmpxoix02
+dn1uqgmpxokb01
+dn1uqgmpxokf01
+dn1uqgmpxokf02
+dn1uqgmpxokf03
+dn1uqgmpxomz01
+dn1uqgmpxonr01
+dn1uqgmpxonx01
+dn1uqgmpxonx02
+dn1uqgmpxosh01
+dn1uqgmpxosh02
+
+
+
+CHG0259209
+
+
+
+CHG0259299 - Patch ESXI servers in BO3 - day 1
+CHG0259280 - Patch ESXI servers in BO3 - day 2
+CHG0259289 - Patch ESXI servers in BO3 - day 3
+CHG0259292 - Patch ESXI servers in BO3 - day 4
+CHG0259294 - Patch ESXI servers in BO3 - day 5
+
+
+CHG0259301 - Patch ESXI servers in DN3 - day 1
