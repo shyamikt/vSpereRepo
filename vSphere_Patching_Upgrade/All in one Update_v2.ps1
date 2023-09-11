@@ -197,7 +197,7 @@ try {
 	$VMHosts = ($ESXiClusterObject | Get-VMHost | sort name | Where { $_.Name -like "$ESXiHost"}).name
 	}
 	if ($upgrademtd -eq 2){
-	Write-host "Importing list of host from hostlist_B2.txt"
+	Write-host "Importing list of hosts from hostlist.txt"
 	$VMHosts = get-content ".\hostlist.txt"
 
 	$ESXiClusterObject = get-vmhost $VMHosts | Get-Cluster
@@ -208,7 +208,7 @@ try {
 	
 	if ($Baseline -eq "") {
 		$x=1
-		$BaselineList = $ESXiClusterObject | get-vmhost | Get-Baseline -Inherit | sort LastUpdateTime -descending
+		$BaselineList = $ESXiClusterObject | get-vmhost | Get-Baseline -Inherit | select name, @{n='type';e={$_.BaselineType}}, @{n='LastUpdated';e={$_.BaselineType}} | sort LastUpdated -descending | sort type -descending
 		Write-Host "`nAvailable Update Manager Baselines in this cluster.  `nIf the desired baseline is missing, attach it to the cluster or host and run the script again."
 		Write-Host "Enter 999 to skip baseline updates. `n0: All Available Updates"
 		$BaselineList | %{Write-Host $x":" $_.name ; $x++}
@@ -369,28 +369,31 @@ Foreach ($VMHost in $VMHosts) {
 			$esxcliRemoveVibArgs = $esxcli.software.vib.remove.CreateArgs()
 			$vibnames=$esxcli.software.vib.list.Invoke() | Where {($_.id -like "*hio*")}
 	   
-	if ($vibnames -ne $null) {
-		Write-Host "VC: Removing non-complient vibs on ESXi Host: $($VMHost.Name)"
-		ForEach ($vibname in $vibnames) {
-			$esxcliRemoveVibArgs.vibname = $vibname.Name
-			$esxcli.software.vib.remove.Invoke($esxcliRemoveVibArgs) > $null 2>&1
+			if ($vibnames -ne $null) {
+				Write-Host "VC: Removing non-complient vibs on ESXi Host: $($VMHost.Name)"
+				ForEach ($vibname in $vibnames) {
+					$esxcliRemoveVibArgs.vibname = $vibname.Name
+					$esxcli.software.vib.remove.Invoke($esxcliRemoveVibArgs) > $null 2>&1
+					}
+			} else {
+				Write-Host "VC: There are no non-complient vibs on ESXi Host: $($VMHost.Name)"}
 			}
-	} else {Write-Host "VC: There are no non-complient vibs on ESXi Host: $($VMHost.Name)"}
-	   }
-	 If ( $rdmres -eq "y"){
-	$naalist = get-content ".\naalist.txt"
-	if ($naalist -eq $empty){
-	}else {
-		Write-Host "VC: Applying RDM Resevation for $($VMHost)"
-		foreach ($naa in $naalist){
-		$naares = $esxcli.storage.core.device.setconfig.Invoke(@{device=$($naa);perenniallyreserved="true"})
-		Write-Host "	Device $($naa) - PerenniallyReserved $($naares)"
+
+		If ( $rdmres -eq "y"){
+		$naalist = get-content ".\naalist.txt"
+
+			if ($naalist -eq $empty){
+			}else {
+				Write-Host "VC: Applying RDM Resevation for $($VMHost)"
+				foreach ($naa in $naalist){
+				$naares = $esxcli.storage.core.device.setconfig.Invoke(@{device=$($naa);perenniallyreserved="true"})
+				Write-Host "	Device $($naa) - PerenniallyReserved $($naares)"
+				}
+			}
 		}
-	}
-	}
 
 
-
+	#The section which handles the UCS firmware upgrade.
 	try {
 		If ($upgrade -ne 1 ){
 		#Heading to UCS
@@ -455,9 +458,9 @@ Foreach ($VMHost in $VMHosts) {
 				}
 			} until ((Get-UcsManagedObject -Dn $ServiceProfileToUpdate.Dn -ucs $ServiceProfileToUpdate.Ucs).AssocState -ieq "associated")
 
-	#pausing script to upgrade esx using iso
+	#If require to pause the script to manually upgrade esx using iso, uncomment the below BootIso.
 	 
-		BootIso			
+		#BootIso			
 		
 					Write-Host "VC: Waiting for ESXi: $($VMHost.Name) to connect to vCenter" 
 			do {
@@ -474,11 +477,12 @@ Foreach ($VMHost in $VMHosts) {
 
 		} #ending UCS part
 
-
-
+		#Applying the patch upgrade.
 		if (($upgrade -ne 2 ) -or (((Get-Baseline $BaselineObject).SearchPatchProduct).replace(' ','') -notmatch ((get-vmhost $vmhost).Version).replace(' ',''))){
-			if(($noncomvib -eq "y") -or (((Get-Baseline $BaselineObject).SearchPatchProduct).replace(' ','') -notmatch ((get-vmhost $vmhost).Version).replace(' ',''))){
-			if ( ((get-VMHost $VMHost).ConnectionState -eq "Maintenance") -and ($vibnames -ne $null)){		
+			if($noncomvib -eq "y") {
+		
+			if ( ((get-VMHost $VMHost).ConnectionState -eq "Maintenance") -and ($vibnames -ne $null)){	
+				
 				Write-Host "VC: ESXi Host: $($VMHost.Name) is now being restart"  -foregroundcolor Yellow
 				$reboot = get-VMHost $VMHost | restart-VMHost -confirm:$false -force | out-null
 				do {
@@ -498,12 +502,13 @@ Foreach ($VMHost in $VMHosts) {
 				}
 			}
 
+
 If ($upgrade -ne 2 ){
 		#Applying Baseline for Esxi
         if ($BaselineObject -ne "") {
             Write-Host "VC: Installing Updates on host $($VMhost.name)"
 			Sleep 10
-            #Test-compliance -entity $vmhost
+            
             try {
 				$Maint = $VMHost | Set-VMHost -State Maintenance
 
