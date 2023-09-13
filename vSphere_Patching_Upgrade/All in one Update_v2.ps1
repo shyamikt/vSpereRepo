@@ -179,34 +179,30 @@ try {
 	Write-host $upgrademtd
 	
 	if ($upgrademtd -eq 1){
-	if ($ESXiCluster -eq "") {
-		$x=1
-		$ClusterList = Get-Cluster | sort name
-		Write-Host "`nAvailable Clusters to update"
-		$ClusterList | %{Write-Host $x":" $_.name ; $x++}
-		$x = Read-Host "Enter the number of the Cluster for the update"
-		$ESXiClusterObject = Get-Cluster $ClusterList[$x-1] 
-	}Else {
-		$ESXiClusterObject = (Get-Cluster $ESXiCluster).Name
-		}
+		if ($ESXiCluster -eq "") {
+			$x=1
+			$ClusterList = Get-Cluster | sort name
+			Write-Host "`nAvailable Clusters to update"
+			$ClusterList | %{Write-Host $x":" $_.name ; $x++}
+			$x = Read-Host "Enter the number of the Cluster for the update"
+			$ESXiClusterObject = Get-Cluster $ClusterList[$x-1] 
+			}Else {
+				$ESXiClusterObject = (Get-Cluster $ESXiCluster).Name
+				}
 	
-	if ($ESXiHost -eq "") {
-		Write-Host "`nEnter name of ESXi Host to update. `nSpecify a FQDN, * for all hosts in cluster, or a wildcard such as Server1*"
-		$ESXiHost = Read-Host "ESXi Host"
-	}
-	$VMHosts = ($ESXiClusterObject | Get-VMHost | sort name | Where { $_.Name -like "$ESXiHost"}).name
-	}
+		$VMHosts = ($ESXiClusterObject | Get-VMHost | sort name ).name
+		}
 	if ($upgrademtd -eq 2){
-	Write-host "Importing list of hosts from hostlist.txt"
-	$VMHosts = get-content ".\hostlist.txt"
-
-	$ESXiClusterObject = get-vmhost $VMHosts | Get-Cluster
-	}
-	if (($VMHosts).count -eq 0){ 
-		No Esxi hosts match -ErrorAction Stop
-	}
+		Write-host "Importing list of hosts from hostlist.txt"
+		$VMHosts = get-content ".\hostlist.txt"
+		$ESXiClusterObject = get-vmhost $VMHosts | Get-Cluster
+		}
+		if (($VMHosts).count -eq 0){ 
+			No Esxi hosts match -ErrorAction Stop
+			}
 	
 	if ($Baseline -eq "") {
+		Write-host "Quering attached baselines......."
 		$x=1
 		$BaselineList = $ESXiClusterObject | get-vmhost | Get-Baseline -Inherit | select name, @{n='type';e={$_.BaselineType}}, @{n='LastUpdated';e={$_.BaselineType}} | sort LastUpdated -descending | sort type -descending
 		Write-Host "`nAvailable Update Manager Baselines in this cluster.  `nIf the desired baseline is missing, attach it to the cluster or host and run the script again."
@@ -250,6 +246,12 @@ try {
 		Write-Host "Any noncompatible vibs to be removed? [y] or [n]"
 		$noncomvib = Read-host 
 		} until (($noncomvib -eq "y" ) -or ($noncomvib -eq "n" ))
+		if ($noncomvib -eq "y" ){
+			do {
+				Write-Host "Please update ViBs on .\viblist.txt for removing prior to the upgrade and enter [C] to continue.."
+				$contvib = Read-host 
+				} until (($contvib -eq "c" ) -and ((test-path -path ".\viblist.txt") -eq $true ))
+			}
 }
  catch { "Error" }
 	if  (!$error) { 
@@ -365,19 +367,25 @@ Foreach ($VMHost in $VMHosts) {
        Write-Host "VC: ESXi Host: $($VMHost.Name) now in Maintenance Mode"  -foregroundcolor Yellow
 
 	   if ($noncomvib -eq "y" ){
+			$viblist = get-content "./viblist.txt"
 			$esxcli = get-vmhost $VMHost | Get-EsxCli -V2
 			$esxcliRemoveVibArgs = $esxcli.software.vib.remove.CreateArgs()
-			$vibnames=$esxcli.software.vib.list.Invoke() | Where {($_.id -like "*hio*")}
+			Write-Host "VC: Removing non-complient vibs on ESXi Host: $($VMHost.Name)"
+			foreach ($vib in $viblist){
+				$vibnames=$null
+				$vibnames=$esxcli.software.vib.list.Invoke() | Where {($_.id -like "*$($vib)*")}
 	   
 			if ($vibnames -ne $null) {
-				Write-Host "VC: Removing non-complient vibs on ESXi Host: $($VMHost.Name)"
 				ForEach ($vibname in $vibnames) {
 					$esxcliRemoveVibArgs.vibname = $vibname.Name
 					$esxcli.software.vib.remove.Invoke($esxcliRemoveVibArgs) > $null 2>&1
+					Write-Host "	 Removed non-complient vib $($vib)"
 					}
 			} else {
-				Write-Host "VC: There are no non-complient vibs on ESXi Host: $($VMHost.Name)"}
+				Write-Host "	 There are no non-complient vibs called $($vib)"}
 			}
+			}
+		
 
 		If ( $rdmres -eq "y"){
 		$naalist = get-content ".\naalist.txt"
@@ -479,7 +487,7 @@ Foreach ($VMHost in $VMHosts) {
 
 		#Applying the patch upgrade.
 		if (($upgrade -ne 2 ) -or (((Get-Baseline $BaselineObject).SearchPatchProduct).replace(' ','') -notmatch ((get-vmhost $vmhost).Version).replace(' ',''))){
-			if($noncomvib -eq "y") {
+			if(($noncomvib -eq "y") -and ($Shutdown -ne "")){
 		
 			if ( ((get-VMHost $VMHost).ConnectionState -eq "Maintenance") -and ($vibnames -ne $null)){	
 				
