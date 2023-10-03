@@ -5,11 +5,13 @@
 #### Add the vms needed in the vm_list.txt file separated by a new line  ######
 
 
-$vm_list = Get-Content "vm_list.txt"
+$vm_list = Get-Content ".\vm_information\vm_list.txt"
 
-$vcenter = #vcenter name 
+$vcenter = "bo3wpcorevcs01.wrk.pad.pearsoncmg.com"
 
 Connect-VIServer $vcenter 
+
+
 
 $results = @()
 
@@ -63,9 +65,9 @@ $results = @()
 
 
 
-$results | export-csv dn1.csv
+$results | export-csv StageBO3.csv
 
 
 
-
+Get-Content ".\vm_information\vm_list.txt" | %{Get-VM | Select-Object Name,NumCPU,MemoryGB,@{n="ProvisionedGB"; e={($_).ProvisionedSpaceGB}},@{n="HardDiskSizeGB"; e={(Get-HardDisk -VM $_ | Measure-Object -Sum CapacityGB).Sum}}}
 
