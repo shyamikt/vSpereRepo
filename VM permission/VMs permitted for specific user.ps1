@@ -1,0 +1,1 @@
+Get-VIPermission -Principal $user | select Entity,Propagate,role | export-csv "C:\Code Repo\honeyVMs.csv"
