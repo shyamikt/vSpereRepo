@@ -69,5 +69,5 @@ $results | export-csv StageBO3.csv
 
 
 
-Get-Content ".\vm_information\vm_list.txt" | %{Get-VM | Select-Object Name,NumCPU,MemoryGB,@{n="ProvisionedGB"; e={($_).ProvisionedSpaceGB}},@{n="HardDiskSizeGB"; e={(Get-HardDisk -VM $_ | Measure-Object -Sum CapacityGB).Sum}}}
+Get-Content ".\vm_information\vm_list.txt" | %{Get-VM $_ | Select-Object Name,NumCPU,MemoryGB,@{n="HardDiskSizeGB"; e={[math]::Round((Get-HardDisk -VM $_ | Measure-Object -Sum CapacityGB).Sum)}},@{n="Cluster"; e={(Get-Cluster -VM $_)}}} | export-csv ".\vm_information\BO3.csv"
 
