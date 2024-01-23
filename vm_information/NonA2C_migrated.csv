@@ -1,0 +1,4 @@
+#TYPE Selected.VMware.VimAutomation.ViCore.Impl.V1.VM.UniversalVirtualMachineImpl
+"Name","Cluster"
+"uk1udmlexapp01","UK1-NUTX-ESX-MT-NONPROD01"
+"uk1cldevapp01","UK1-NUTX-ESX-MT-NONPROD01"

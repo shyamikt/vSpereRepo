@@ -1,6 +1,3 @@
-lo1wpresapp001
-lo1wpresapp002
-lo1wpresapp003
-lo1wsaapapp004
-lo1wtpqsapp001
-lo3wdpqsapp002
+udmlexapp01
+cldevapp01
+wpilbapp001

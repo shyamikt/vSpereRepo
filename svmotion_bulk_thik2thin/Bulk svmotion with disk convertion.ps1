@@ -1,4 +1,4 @@
-﻿Connect-VIServer vsphereqa
+﻿#Connect-VIServer vsphereqa
 
 function Wait-mTaskvMotions {
 
@@ -8,11 +8,11 @@ function Wait-mTaskvMotions {
 
       [int] $vMotionLimit=1,
 
-      [int] $DelayMinutes=5
+      [int] $DelayMinutes=1
 
     )
 
-    $NumvMotionTasks = (Get-Task | ? { ($_.PercentComplete -ne 100) -and ($_.Description -match 'Apply Storage DRS recommendations|Migrate virtual machine')} | Measure-Object).Count
+    $NumvMotionTasks = (Get-Task | ? { ($_.PercentComplete -ne 100) -and ($_.Description -match 'Apply Storage DRS recommendations|Migrate virtual machine|Relocate virtual machine')} | Measure-Object).Count
 
     While ( $NumvMotionTasks -ge $vMotionLimit ) {
 
@@ -20,7 +20,7 @@ function Wait-mTaskvMotions {
 
         Start-Sleep ($DelayMinutes * 60)
 
-        $NumvMotionTasks = (Get-Task | ? { ($_.PercentComplete -ne 100) -and ($_.Description -match 'Apply Storage DRS recommendations|Migrate virtual machine')} | Measure-Object).Count
+        $NumvMotionTasks = (Get-Task | ? { ($_.PercentComplete -ne 100) -and ($_.Description -match 'Apply Storage DRS recommendations|Migrate virtual machine|Relocate virtual machine')} | Measure-Object).Count
 
     }
 
@@ -30,7 +30,7 @@ function Wait-mTaskvMotions {
 
 } # end function
 
-$filepath = "H:\VM Scripts\test_svmotion.csv"
+$filepath = ".\svmotion_bulk_thik2thin\svmotionlist.csv"
 
 $csvobj = import-csv $filepath
 
@@ -38,10 +38,12 @@ foreach ($row in $csvobj) {
 
      $vmobj = get-vm $row.vmname
 
-     $ds = get-datastorecluster $row.destds
+     $ds = get-datastore $row.destds
+
+     $vmobj | Get-Snapshot | %{Remove-Snapshot $_ -Confirm:$false }
 
      $vmobj | move-vm -datastore $ds -DiskStorageFormat Thin -confirm:$false -runasync
 
-     Wait-mTaskvMotions -vMotionLimit 4 # This will keep going through the foreach loop until 4 tasks are registered (vMotion or Storage vMotion), waits 5 minutes between checks.  Will only continue to process loop when vMotion tasks are less than 4.
+     Wait-mTaskvMotions -vMotionLimit 2 # This will keep going through the foreach loop until 4 tasks are registered (vMotion or Storage vMotion), waits 5 minutes between checks.  Will only continue to process loop when vMotion tasks are less than 4.
 
 }
