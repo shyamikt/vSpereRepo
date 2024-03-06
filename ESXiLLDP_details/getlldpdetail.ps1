@@ -7,7 +7,7 @@ $EsxHost = get-vmhost "uk1udnutxesx01.pearsontc.com"
    $NetworkView = Get-View ((Get-View $EsxHost).Configmanager.Networksystem)
   
    $vSwitchesNics=@()
-   $vSwitches = $EsxHost |Get-VirtualSwitch
+   $vSwitches = $EsxHost |Get-VDSwitch
    foreach ($vSwitch in $vSwitches) { 
      if ($vSwitch.nic) {      #VSS Filter
    foreach ($Nic in $vSwitch.nic) {  $vSwitchesNics+= $vSwitch |Select @{N="Name";E={$vSwitch.name}}, @{N="Nic";E={$Nic}}  }
