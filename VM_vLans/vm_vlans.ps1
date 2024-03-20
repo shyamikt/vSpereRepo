@@ -1,0 +1,1 @@
+Get-Datacenter "UK1 DC"| get-vm | select name, @{n="Cluster";e={get-cluster -VM $_}}, @{n="vLan";e={(Get-VDPortgroup -Name (Get-NetworkAdapter -VM $_).NetworkName).ExtensionData.Config.DefaultPortConfig.Vlan.VlanId}} | Export-csv ".\uk1vmvlans.csv"

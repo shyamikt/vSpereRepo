@@ -1,7 +1,6 @@
-$EsxHost = get-vmhost "uk1udnutxesx01.pearsontc.com"
-
+$lldp = Foreach ($EsxHost in (Get-Datacenter "UK1 DC"| get-vmhost)){
  
-  
+  write-host "Quarying $EsxHost......"
    $Esxcli = Get-Esxcli -vmhost $EsxHost.name -V2
    $EsxcliInfo=$esxcli.network.nic.list.invoke()
    $NetworkView = Get-View ((Get-View $EsxHost).Configmanager.Networksystem)
@@ -36,4 +35,5 @@ $EsxHost = get-vmhost "uk1udnutxesx01.pearsontc.com"
    @{N="PnicDriver";E={$_.ExtensionData.Driver}},
    @{N="PciSlot";E={$_.ExtensionData.Pci}}
 
- 
+} 
+$lldp | Export-Csv ".\ESXiLLDP_details\getlldpdetail.csv"
