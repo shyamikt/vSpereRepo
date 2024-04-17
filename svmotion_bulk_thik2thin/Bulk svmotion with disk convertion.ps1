@@ -30,7 +30,7 @@ function Wait-mTaskvMotions {
 
 } # end function
 
-$filepath = ".\svmotion_bulk_thik2thin\svmotionlist.csv"
+$filepath = ".\svmotionlist.csv"
 
 $csvobj = import-csv $filepath
 
@@ -40,10 +40,12 @@ foreach ($row in $csvobj) {
 
      $ds = get-datastore $row.destds
 
-     $vmobj | Get-Snapshot | %{Remove-Snapshot $_ -Confirm:$false }
+     $cls = get-datastore $row.cluster
 
-     $vmobj | move-vm -datastore $ds -DiskStorageFormat Thin -confirm:$false -runasync
+     #$vmobj | Get-Snapshot | %{Remove-Snapshot $_ -Confirm:$false }
 
-     Wait-mTaskvMotions -vMotionLimit 2 # This will keep going through the foreach loop until 4 tasks are registered (vMotion or Storage vMotion), waits 5 minutes between checks.  Will only continue to process loop when vMotion tasks are less than 4.
+     $vmobj | move-vm -Destination $cls -datastore $ds -DiskStorageFormat Thin -confirm:$false -runasync
+
+     Wait-mTaskvMotions -vMotionLimit 4 # This will keep going through the foreach loop until 4 tasks are registered (vMotion or Storage vMotion), waits 5 minutes between checks.  Will only continue to process loop when vMotion tasks are less than 4.
 
 }
