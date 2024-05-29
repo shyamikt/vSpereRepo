@@ -12,22 +12,25 @@ Param(
 	[Parameter(Mandatory=$true, HelpMessage="vCenter URL")]
 	[string]$vCenter,
 
-    [Parameter(Mandatory=$true, HelpMessage="vCenter URL")]
+    [Parameter(Mandatory=$true, HelpMessage="vCenter user")]
 	[string]$vcuser,
 
-    [Parameter(Mandatory=$true, HelpMessage="vCenter URL")]
-	[string]$vCpass
+    [Parameter(Mandatory=$true, HelpMessage="vCenter password")]
+	[string]$vCpass,
 
-    
+    [Parameter(Mandatory=$true, HelpMessage="Esxi default password")]
+	[string]$dfltesxipass
+   
 )
 
-
+######## Functuin for PUM Password Retrieve ######
 function retrivepumpass {
     Param(
     [Parameter(Mandatory=$true)]
-    [string]$keyword
+    [string]$keyword,
+    [Parameter(Mandatory=$true)]
+    [string]$dfltesxipass
     )
-
                             
     $baseURI = "https://pum.pearson.com"
     $reason =  "ESXi Maintenance"
@@ -38,43 +41,66 @@ function retrivepumpass {
 
     $apitoken = (Invoke-RestMethod "$baseURI/passwordvault/api/Auth/LDAP/logon" -Method 'POST' -Headers $headers -Body $bodyauth | ConvertTo-Json).trim('"')
 
-
     $headers.Add("Authorization", $apitoken)
-
     $res = Invoke-WebRequest "$baseURI/passwordvault/api/accounts?search=$keyword" -Method 'GET' -Headers $headers 
+    if (((ConvertFrom-Json -InputObject $res.Content  | Select-Object -ExpandProperty "value").count -eq 1) -or ($null -eq (ConvertFrom-Json -InputObject $res.Content  | Select-Object -ExpandProperty "value").count) ) {
     $id = (ConvertFrom-Json -InputObject $res.Content  | Select-Object -ExpandProperty "value").id
     $bodygetpass = "{`n    `"reason`": `"$reason`",`n    `"TicketId`": `"`",`n    `"ActionType`": `"show`"`n}"
 
     $global:pass =(Invoke-RestMethod "$baseURI/passwordvault/api/accounts/$id/password/retrieve" -Method 'POST' -Headers $headers -Body $bodygetpass | ConvertTo-Json).trim('"')
+    write-host "$($keyword) " -NoNewline
+    write-host "password retrieved: " -ForegroundColor Green -NoNewline
+    write-host "$pass"
+    }
+    else{
+        if(((ConvertFrom-Json -InputObject $res.Content  | Select-Object -ExpandProperty "value").count -eq 0) ){
+        Write-Host "No PUM record for $($keyword), using default password" -ForegroundColor Magenta
+        $global:pass = $dfltesxipass
+        }
+        else{
+            Write-Host "Too many Records found on PUM, Please do manually" -ForegroundColor Red
+            $global:pass = "error"
+            
+        }
+    }
+    }
     
 
-    }
-    #write-host "Validating input $hostlistpath, $vCenter, $pumuser, $pumpass"
+write-host "Validating input $hostlistpath, $vCuser, $vcpass, $pumuser, $pumpass"
+######## Connecting to vCenter ######
 Set-PowerCLIConfiguration -InvalidCertificateAction Ignore -Confirm:$false | Out-Null
-write-host "Connecting VC"
+$error.clear()
+write-host "Connecting to $($vCenter)"
 
 try{
-    $null = $error
-($vc = Connect-VIServer -server $($vCenter) -User $vcuser -Password $vcpass) > $null 2>&1
+    
+($vc = Connect-VIServer -server $($vCenter) -User $vcuser -Password $vcpass ) > $null 2>&1
 }
 catch{"Error"}
 if ($error){
     Write-Host "$error" -ForegroundColor Red
+    $error.clear()
     break
 }
 write-host "Conneted " -foregroundcolor Green -NoNewline
 write-host "$vc"
+
+######## Importing host list and their details ######
 import-csv -path $hostlistpath |ForEach-Object{ 
-    $null = $error
+    $error.clear()
     try{
-        write-host "Retriving PUM Password for $($_.host)"
-    retrivepumpass -keyword $_.host
-    write-host "$($_.host) " -NoNewline
-    write-host "password retrieved: " -BackgroundColor Green -NoNewline
-    write-host "$pass"
+    ######## Calling function for Retrieving PUM Password ######
+    write-host "Retrieving PUM Password for $($_.host)"
+    retrivepumpass -keyword $_.host -dfltesxipass $dfltesxipass
+
     }
     catch { "Error" }
     if (!$error){
+        if($pass -eq "error"){ 
+            $error.clear()
+            Continue
+        }
+        ######## Adding host to vCenter using retrieved Password ######
         write-host "Adding $($_.host)"
         $hostadd = Add-vmhost -name $_.host -Location $_.Cluster -User root -Password $pass -Confirm:$false -Force
         Write-Host "Host $($hostadd.name) " -NoNewline

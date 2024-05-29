@@ -1,7 +1,7 @@
 
 $pumuser = ""
 $pumpass = ""
-$keyword = "dn1upcoreesx53m"
+$keyword = ""
 $baseURI = "https://pum.pearson.com"
 $reason =  "ESXi Maintenance"
 $headers = New-Object "System.Collections.Generic.Dictionary[[String],[String]]"
