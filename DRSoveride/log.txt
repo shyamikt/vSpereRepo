@@ -1,0 +1,16 @@
+2024-07-24T13:25:40 Info Starting script task 07/24/2024 13:25:40
+2024-07-24T13:25:40 Info Connecting to dn1wpcorevcs01.dcsprod.dcsroot.local
+2024-07-24T13:26:27 Info 46 vms found that are not in the DRS OverRide.
+2024-07-24T13:26:27 Info Disonnecting dn1wpcorevcs01.dcsprod.dcsroot.local
+2024-07-24T13:26:27 Info Connecting to icdwpcorevcs41.dcsprod.dcsroot.local
+2024-07-24T13:26:38 Info 0 vms found that are not in the DRS OverRide.
+2024-07-24T13:27:15 Info Disonnecting icdwpcorevcs41.dcsprod.dcsroot.local
+2024-07-24T13:27:15 Info Ending script task 07/24/2024 13:27:15
+2024-07-24T13:28:46 Info Starting script task 07/24/2024 13:28:46
+2024-07-24T13:28:47 Info Connecting to dn1wpcorevcs01.dcsprod.dcsroot.local
+2024-07-24T13:29:23 Info 46 vms are eligible for DRS OverRide.
+2024-07-24T13:29:24 Info Disonnecting dn1wpcorevcs01.dcsprod.dcsroot.local
+2024-07-24T13:29:24 Info Connecting to icdwpcorevcs41.dcsprod.dcsroot.local
+2024-07-24T13:29:35 Info 0 vms are eligible for DRS OverRide.
+2024-07-24T13:30:00 Info Disonnecting icdwpcorevcs41.dcsprod.dcsroot.local
+2024-07-24T13:30:00 Info Ending script task 07/24/2024 13:30:00

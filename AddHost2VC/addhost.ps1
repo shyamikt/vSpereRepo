@@ -66,7 +66,7 @@ function retrivepumpass {
     }
     
 
-write-host "Validating input $hostlistpath, $vCuser, $vcpass, $pumuser, $pumpass"
+#write-host "Validating input $hostlistpath, $vCuser, $vcpass, $pumuser, $pumpass"
 ######## Connecting to vCenter ######
 Set-PowerCLIConfiguration -InvalidCertificateAction Ignore -Confirm:$false | Out-Null
 $error.clear()

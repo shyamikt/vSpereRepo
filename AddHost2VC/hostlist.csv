@@ -1,5 +1,5 @@
 HOST,vCenter,Cluster,Status,CHG #
-icdupdmzesx03m.dcsutil.dcsroot.local,ICD,VUE WEB DMZ,Completed,CHG0056063
-icdupdmzesx07m.pearsontc.com,ICD,VUE WEB DMZ,Completed,CHG0056063
-icdupdmzesx04m.dcsutil.dcsroot.local,ICD,VUE WEB DMZ,Completed,CHG0056063
-icdupdmzesx14m.pearsontc.com,ICD,VUE WEB DMZ,Completed,CHG0056063
+icdupcoreesx80m.ic.ncs.com,ICD,Iowa City Shared UCS POD 1,Completed,CHG0056063
+icdupcoreesx64m.ic.ncs.com,ICD,Iowa City Shared UCS POD 1,Completed,CHG0056063
+icdupcoreesx79m.ic.ncs.com,ICD,Iowa City Shared UCS POD 1,Completed,CHG0056063
+icdupcoreesx84m.ic.ncs.com,ICD,Iowa City Shared UCS POD 1,Completed,CHG0056063
